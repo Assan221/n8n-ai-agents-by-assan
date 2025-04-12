@@ -1,0 +1,201 @@
+{
+  "name": "test",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        120,
+        -80
+      ],
+      "id": "059fc271-63ba-4eb9-a5a7-fa15ad222c7c",
+      "name": "Telegram Trigger",
+      "webhookId": "cdbd8924-72f8-48cb-b465-a0513e10c3ba",
+      "credentials": {
+        "telegramApi": {
+          "id": "6WMRxmiSqsv3wBpj",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "#Overview\nYou are the ultimate personal assistant. Your job is to send the users query to the correct tool. You should never be writing emails, or creating even summaries, you just need to call the correct tool.\n## Tools\n- Tavily: Use this tool to search the web"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        340,
+        -80
+      ],
+      "id": "97fef742-f313-43e9-850a-86139d4047c9",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        280,
+        120
+      ],
+      "id": "52106ffa-ed1d-4558-92c9-82b9dd6ebb6a",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "kwAZqsD3SKKNmGOr",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id}}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        440,
+        140
+      ],
+      "id": "cf3ba420-c5f0-4aed-8059-4c5ac197f783",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"api_key\": \"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\",\n  \"query\": \"{searchTerm}\",\n  \"search_depth\": \"basic\",\n  \"include_answer\": true,\n  \"include_raw_content\": false,\n  \"include_images\": false,\n  \"include_sources\": true\n}",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "searchTerm",
+              "description": "What the user has requested to search the internet for",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        140
+      ],
+      "id": "a380e9dd-6fcc-46c6-a020-63d6bd5b689d",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "chatId": "=922355075",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        680,
+        -80
+      ],
+      "id": "0755e367-a2f4-4344-b4db-242c21e53bcb",
+      "name": "Telegram",
+      "webhookId": "faeff3d2-b593-4829-a2bc-e777e5f6c3a2",
+      "credentials": {
+        "telegramApi": {
+          "id": "6WMRxmiSqsv3wBpj",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8a80f675-90fc-48c3-aad4-8013e51861f2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c9ee16e0a5087e05585991651b3ecde63071a7e9ef2d7622d28caae0f5e8f53b"
+  },
+  "id": "f7fh4foR4P3qfbIf",
+  "tags": []
+}
